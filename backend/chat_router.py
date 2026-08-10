@@ -15,6 +15,7 @@ from backend.models import Appointment, Doctor, DoctorAvailability, Patient, Rev
 from backend.booking import book_appointment, find_doctors_by_name, clean_doctor_name
 from backend.availability import get_available_slots, get_weekly_availability, parse_iso_date
 from backend.llm_helpers import get_chat_completion, detect_language
+from backend.symptom_classifier import build_symptom_hint
 from backend.session_store import session_store
 from backend.schemas import ChatRequest, ChatResponse
 from backend.auth import get_current_user
@@ -390,7 +391,7 @@ def execute_tool_call(name: str, arguments: dict, db: Session, patient_id: int) 
         return {"error": f"Something went wrong while running '{name}': {e}"}
 
 
-def build_system_prompt(language: str) -> str:
+def build_system_prompt(language: str, symptom_hint: str = None) -> str:
     today = datetime.now()
     lang_instruction = {
         "ur": "The user is writing in Urdu script. Respond in Urdu.",
@@ -398,7 +399,7 @@ def build_system_prompt(language: str) -> str:
         "en": "Respond in English.",
     }.get(language, "Respond in the same language and script the user used.")
 
-    return f"""You are the AI medical assistant for Stellaris General Hospital.
+    prompt = f"""You are the AI medical assistant for Stellaris General Hospital.
 
 Today's date is {today.strftime('%Y-%m-%d')} ({today.strftime('%A')}).
 
@@ -443,13 +444,19 @@ internal system details to the user.
 {lang_instruction}
 """
 
+    if symptom_hint:
+        prompt += f"\n\n{symptom_hint}"
+
+    return prompt
+
 
 def run_chat_turn(db: Session, session_id: str, patient_id: int, user_message: str) -> str:
     language = detect_language(user_message)
+    symptom_hint = build_symptom_hint(user_message)
     session_store.update(session_id, {"language": language})
 
     history = session_store.get_history_for_llm(session_id)
-    messages = [{"role": "system", "content": build_system_prompt(language)}]
+    messages = [{"role": "system", "content": build_system_prompt(language, symptom_hint)}]
     messages.extend(history)
     messages.append({"role": "user", "content": user_message})
 
