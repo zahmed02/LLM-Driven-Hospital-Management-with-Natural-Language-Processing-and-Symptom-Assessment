@@ -9,6 +9,7 @@ import AdminPanel from './pages/AdminPanel';
 import AppointmentSlips from './pages/AppointmentSlips';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Preview from './pages/Preview';
 import ProtectedRoute from './auth/ProtectedRoute';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 
@@ -30,6 +31,7 @@ function App() {
       {/* Public */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/preview" element={<Preview />} />
 
       {/* Everything below requires a valid, non-logged-out session.
           Typing /calendar, /doctors, or /admin directly while logged out
