@@ -1,136 +1,22 @@
 import { useState } from 'react';
 import { sendChatMessage } from '../api/client';
 
-interface Props {
-  patientId?: number;
-}
-
+interface Props { patientId?: number; }
 export default function ChatInterface({ patientId }: Props) {
-  const [messages, setMessages] = useState<{ role: 'user' | 'bot'; text: string }[]>([
-    { role: 'bot', text: "Hello! I'm your Stellaris AI Assistant. How can I help you today?" }
-  ]);
+  const [messages, setMessages] = useState<{ role: 'user' | 'bot'; text: string }[]>([{ role: 'bot', text: 'Welcome to Stellaris Health. I can help you navigate appointments and services. What can I help you with today?' }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-    const userMsg = input;
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-    setInput('');
-    setLoading(true);
-
-    try {
-      const res = await sendChatMessage(userMsg, patientId);
-      setMessages(prev => [...prev, { role: 'bot', text: res.response }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, an error occurred.' }]);
-    } finally {
-      setLoading(false);
-    }
+  const sendMessage = async (preset?: string) => {
+    const text = (preset ?? input).trim(); if (!text || loading) return;
+    setMessages((prev) => [...prev, { role: 'user', text }]); setInput(''); setLoading(true);
+    try { const res = await sendChatMessage(text, patientId); setMessages((prev) => [...prev, { role: 'bot', text: res.response }]); }
+    catch { setMessages((prev) => [...prev, { role: 'bot', text: 'I could not complete that request. Please try again or contact the care team.' }]); }
+    finally { setLoading(false); }
   };
-
-  const suggestedActions = [
-    { icon: 'calendar_add_on', label: 'Book Appointment' },
-    { icon: 'schedule', label: 'Check Schedules' },
-    { icon: 'info', label: 'General Inquiry' },
-  ];
-
-  return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-outline-variant shadow-sm flex flex-col h-[600px]">
-      {/* Header */}
-      <div className="bg-surface-container-high px-4 py-3 flex items-center justify-between border-b border-outline-variant">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-on-primary">
-            <span className="material-symbols-outlined">smart_toy</span>
-          </div>
-          <div>
-            <h2 className="font-semibold text-primary">Stellaris AI Assistant</h2>
-            <p className="text-xs text-secondary flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse"></span>
-              Clinical Protocol Active
-            </p>
-          </div>
-        </div>
-        <button className="p-1 hover:bg-surface-variant rounded-full transition-colors">
-          <span className="material-symbols-outlined text-on-surface-variant">more_vert</span>
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-            {msg.role === 'bot' && (
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-on-primary text-sm">smart_toy</span>
-              </div>
-            )}
-            <div className={`max-w-[80%] px-4 py-2 rounded-xl ${
-              msg.role === 'user'
-                ? 'bg-primary-container text-on-primary rounded-tr-none'
-                : 'bg-white border border-outline-variant rounded-tl-none'
-            }`}>
-              <p className="text-sm">{msg.text}</p>
-            </div>
-            {msg.role === 'user' && (
-              <div className="h-8 w-8 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant">
-                <span className="material-symbols-outlined text-on-surface-variant text-sm">person</span>
-              </div>
-            )}
-          </div>
-        ))}
-        {loading && (
-          <div className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-on-primary text-sm">smart_toy</span>
-            </div>
-            <div className="bg-white border border-outline-variant px-4 py-2 rounded-xl rounded-tl-none">
-              <p className="text-sm text-on-surface-variant">Thinking...</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Suggested Actions */}
-      <div className="px-4 pb-2 flex flex-wrap gap-2">
-        {suggestedActions.map((action, i) => (
-          <button
-            key={i}
-            onClick={() => {
-              setInput(action.label);
-              setTimeout(sendMessage, 100);
-            }}
-            className="px-3 py-1.5 bg-surface-container text-primary border border-primary/20 rounded-full text-xs font-medium hover:bg-primary-container hover:text-on-primary transition-all flex items-center gap-1"
-          >
-            <span className="material-symbols-outlined text-sm">{action.icon}</span>
-            {action.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Input */}
-      <div className="p-4 bg-white border-t border-outline-variant">
-        <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/20">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="flex-1 bg-transparent border-none focus:ring-0 text-sm placeholder:text-on-surface-variant/50"
-            placeholder="Type your inquiry..."
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          />
-          <button
-            onClick={sendMessage}
-            className="bg-primary text-white h-8 w-8 rounded-lg flex items-center justify-center shadow-sm hover:shadow active:scale-95 transition-all"
-            disabled={loading}
-          >
-            <span className="material-symbols-outlined text-sm">send</span>
-          </button>
-        </div>
-        <p className="text-center text-xs text-on-surface-variant mt-1">
-          AI may provide general info. For emergencies, call <span className="text-tertiary font-bold">911</span>.
-        </p>
-      </div>
-    </div>
-  );
+  const actions = [{ icon: 'calendar_add_on', label: 'Book an appointment' }, { icon: 'schedule', label: 'Check my appointments' }, { icon: 'medical_services', label: 'Find a specialist' }];
+  return <section className="medical-card flex h-[min(650px,calc(100vh-245px))] min-h-[520px] flex-col overflow-hidden">
+    <header className="flex items-center justify-between border-b border-outline-variant bg-surface-container-low px-5 py-4"><div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-full bg-primary text-white"><span className="material-symbols-outlined">support_agent</span></div><div><h2 className="text-sm font-semibold">Stellaris care assistant</h2><p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-secondary"><span className="size-1.5 rounded-full bg-secondary" />Available now · General guidance</p></div></div><button className="flex size-8 items-center justify-center rounded-md text-on-surface-variant hover:bg-surface-container"><span className="material-symbols-outlined">more_horiz</span></button></header>
+    <div className="flex-1 overflow-y-auto bg-surface px-5 py-6"><div className="mx-auto flex max-w-3xl flex-col gap-5">{messages.map((msg, idx) => <div key={idx} className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>{msg.role === 'bot' && <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-container text-on-primary-container"><span className="material-symbols-outlined text-[18px]">support_agent</span></div>}<div className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-6 ${msg.role === 'user' ? 'rounded-br-sm bg-primary text-white' : 'rounded-bl-sm border border-outline-variant bg-surface-bright text-on-surface'}`}>{msg.text}</div>{msg.role === 'user' && <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-container text-on-surface-variant"><span className="material-symbols-outlined text-[18px]">person</span></div>}</div>)}{loading && <div className="flex items-center gap-3 text-xs text-on-surface-variant"><div className="flex size-7 items-center justify-center rounded-full bg-primary-container"><span className="material-symbols-outlined text-[18px]">support_agent</span></div>Assistant is preparing a response…</div>}</div></div>
+    <div className="border-t border-outline-variant bg-surface-bright px-5 py-4"><div className="mb-3 flex flex-wrap gap-2">{actions.map((action) => <button key={action.label} onClick={() => sendMessage(action.label)} className="flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:border-primary hover:text-primary"><span className="material-symbols-outlined text-[16px]">{action.icon}</span>{action.label}</button>)}</div><div className="flex items-center gap-2 rounded-xl border border-outline bg-surface px-3 py-2 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10"><input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.nativeEvent.isComposing || e.keyCode === 229) return; if (e.key === 'Enter') sendMessage(); }} placeholder="Describe what you need help with…" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-on-surface-variant/60" /><button onClick={() => sendMessage()} disabled={loading || !input.trim()} className="flex size-9 items-center justify-center rounded-lg bg-primary text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"><span className="material-symbols-outlined text-[18px]">arrow_upward</span></button></div><p className="mt-2 text-center text-[11px] text-on-surface-variant">This assistant provides general information and is not a substitute for clinical advice. For emergencies, call <strong>911</strong>.</p></div>
+  </section>;
 }

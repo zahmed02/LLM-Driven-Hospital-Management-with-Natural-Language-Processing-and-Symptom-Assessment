@@ -1,7 +1,6 @@
 // src/components/AnimatedComponents.tsx
 import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import type { ReactNode, ButtonHTMLAttributes } from 'react';
 
 export const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.98 },
@@ -20,7 +19,9 @@ export const fadeInUp = {
 };
 
 // Animated Button (unchanged)
-export const AnimatedButton = ({ children, onClick, className = '', variant = 'primary', ...props }) => {
+type AnimatedButtonProps = Pick<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'onClick' | 'className' | 'disabled' | 'type'> & { variant?: 'primary' | 'secondary' | 'outline' | 'danger' };
+
+export const AnimatedButton = ({ children, onClick, className = '', variant = 'primary', ...props }: AnimatedButtonProps) => {
   const getBaseStyles = () => {
     switch (variant) {
       case 'primary':

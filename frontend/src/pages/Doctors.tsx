@@ -138,6 +138,16 @@ export default function Doctors() {
             </div>
           </div>
           <div className="mb-4">
+            <label className="text-xs font-medium text-on-surface-variant block mb-1">Experience</label>
+            <select
+              value={minExp || ''}
+              onChange={(e) => setMinExp(e.target.value ? Number(e.target.value) : undefined)}
+              className="mb-3 w-full rounded-lg border border-outline-variant bg-surface-container-lowest p-1.5 text-sm outline-none focus:border-primary"
+            >
+              <option value="">Any experience</option>
+              <option value="5">5+ years</option>
+              <option value="10">10+ years</option>
+            </select>
             <label className="text-xs font-medium text-on-surface-variant block mb-1">Min. Rating</label>
             <select
               value={minRating || ''}
@@ -151,7 +161,7 @@ export default function Doctors() {
           </div>
           <AnimatedButton
             variant="primary"
-            onClick={() => { setSpecialty(''); setMinRating(undefined); search(); }}
+            onClick={() => { setSpecialty(''); setMinExp(undefined); setMinRating(undefined); search(); }}
             className="w-full text-sm"
           >
             Reset Filters
